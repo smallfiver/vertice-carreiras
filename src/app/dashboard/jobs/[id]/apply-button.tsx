@@ -23,6 +23,11 @@ export function ApplyButton({
       await supabase
         .from("applications")
         .upsert({ user_id: user.id, job_id: jobId }, { onConflict: "user_id,job_id" });
+      await supabase.from("user_events").insert({
+        user_id: user.id,
+        event_type: "apply_job",
+        event_data: { job_id: jobId },
+      });
     }
     window.open(applicationUrl, "_blank");
     setLoading(false);

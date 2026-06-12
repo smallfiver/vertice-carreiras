@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, ShieldCheck, Award, TrendingUp, Lock as LockIcon, MessageCircle } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,9 +23,16 @@ export default function LoginPage() {
     setLoading(true);
     setMsg(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return setMsg(error.message);
+    if (data.user) {
+      await supabase.from("user_events").insert({
+        user_id: data.user.id,
+        event_type: "login",
+        event_data: { method: "password" },
+      });
+    }
     router.push("/dashboard");
     router.refresh();
   }
@@ -73,19 +81,7 @@ export default function LoginPage() {
           }}
         />
         <div className="relative">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-md gold-gradient grid place-items-center">
-              <span className="font-serif text-bg-deep text-xl font-bold">V</span>
-            </div>
-            <div>
-              <div className="font-serif text-xl font-bold tracking-wide">
-                VÉRTICE
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.25em] text-brand -mt-0.5">
-                Carreiras
-              </div>
-            </div>
-          </div>
+          <Logo size="lg" />
         </div>
 
         <div className="relative space-y-8">
@@ -143,16 +139,8 @@ export default function LoginPage() {
       {/* Right form */}
       <div className="flex items-center justify-center p-6 md:p-12 bg-bg">
         <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-md gold-gradient grid place-items-center">
-              <span className="font-serif text-bg-deep font-bold">V</span>
-            </div>
-            <div>
-              <div className="font-serif font-bold tracking-wide">VÉRTICE</div>
-              <div className="text-[9px] uppercase tracking-[0.25em] text-brand -mt-0.5">
-                Carreiras
-              </div>
-            </div>
+          <div className="lg:hidden mb-8">
+            <Logo size="md" />
           </div>
 
           <div className="mb-6">

@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 export default async function AdminUsersPage() {
   const supabase = createClient();
@@ -33,6 +35,7 @@ export default async function AdminUsersPage() {
                 <th className="py-2 pr-3">PerfectPay</th>
                 <th className="py-2 pr-3">Admin</th>
                 <th className="py-2 pr-3 min-w-[200px]">Progresso</th>
+                <th className="py-2 pr-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -40,13 +43,13 @@ export default async function AdminUsersPage() {
                 const done = byUser.get(p.id) || 0;
                 const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                 return (
-                  <tr key={p.id} className="border-t border-border">
+                  <tr key={p.id} className="border-t border-border hover:bg-card-alt/40">
                     <td className="py-2 pr-3">{p.full_name || "—"}</td>
                     <td className="py-2 pr-3">{p.email}</td>
                     <td className="py-2 pr-3">
                       {p.created_at ? new Date(p.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
-                    <td className="py-2 pr-3 font-mono text-xs">{p.perfectpay_code || "—"}</td>
+                    <td className="py-2 pr-3 font-mono text-xs">{p.perfectpay_sale_code || "—"}</td>
                     <td className="py-2 pr-3">{p.is_admin ? "Sim" : "Não"}</td>
                     <td className="py-2 pr-3">
                       <div className="flex items-center gap-2">
@@ -56,12 +59,20 @@ export default async function AdminUsersPage() {
                         </span>
                       </div>
                     </td>
+                    <td className="py-2 pr-3">
+                      <Link
+                        href={`/admin/users/${p.id}`}
+                        className="inline-flex items-center gap-1 text-xs text-brand-accent hover:underline"
+                      >
+                        Ver atividade <ChevronRight className="h-3 w-3" />
+                      </Link>
+                    </td>
                   </tr>
                 );
               })}
               {(!profiles || profiles.length === 0) && (
                 <tr>
-                  <td colSpan={6} className="py-4 text-fg-muted text-center">
+                  <td colSpan={7} className="py-4 text-fg-muted text-center">
                     Nenhum usuário cadastrado.
                   </td>
                 </tr>

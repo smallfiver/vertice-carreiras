@@ -38,6 +38,12 @@ export function CompleteLessonButton({
       { onConflict: "user_id,lesson_id" }
     );
 
+    await supabase.from("user_events").insert({
+      user_id: user.id,
+      event_type: "complete_lesson",
+      event_data: { lesson_id: lessonId },
+    });
+
     // Marca o dia zero do treinamento na primeira conclusão — é a partir
     // dele que os dias D+1..D+6 são calculados pra liberação gradual.
     const { data: profile } = await supabase

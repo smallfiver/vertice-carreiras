@@ -10,6 +10,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { isTimeUnlocked } from "@/lib/progress";
+import { trackEvent } from "@/lib/track";
 
 export default async function LessonPlayerPage({
   params,
@@ -74,6 +75,13 @@ export default async function LessonPlayerPage({
   }
 
   const done = completedIds.has(lesson.id);
+
+  await trackEvent(user.id, "view_lesson", {
+    lesson_id: lesson.id,
+    lesson_title: lesson.title,
+    module_id: lesson.modules?.id,
+    module_title: lesson.modules?.title,
+  });
 
   return (
     <div className="flex">

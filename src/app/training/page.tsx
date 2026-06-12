@@ -13,6 +13,8 @@ import {
   formatUnlockMessage,
 } from "@/lib/progress";
 import { redirect } from "next/navigation";
+import { ModuleCover } from "@/components/training/module-cover";
+import { trackEvent } from "@/lib/track";
 
 export default async function TrainingPage() {
   const supabase = createClient();
@@ -20,6 +22,8 @@ export default async function TrainingPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  await trackEvent(user.id, "view_training");
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -84,16 +88,20 @@ export default async function TrainingPage() {
             const lessons = [...(m.lessons || [])].sort(
               (a: any, b: any) => a.sequence_order - b.sequence_order
             );
+            const doneCount = lessons.filter((l: any) =>
+              completedIds.has(l.id)
+            ).length;
             return (
-              <Card key={m.id}>
-                <CardHeader>
-                  <h2 className="font-semibold">
-                    Módulo {m.sequence_order} — {m.title}
-                  </h2>
-                  {m.description && (
-                    <p className="text-sm text-fg-muted">{m.description}</p>
-                  )}
-                </CardHeader>
+              <Card key={m.id} className="overflow-hidden">
+                <ModuleCover
+                  sequenceOrder={m.sequence_order}
+                  title={m.title}
+                  description={m.description}
+                  coverGradient={m.cover_gradient}
+                  iconKey={m.icon_key}
+                  lessonsTotal={lessons.length}
+                  lessonsDone={doneCount}
+                />
                 <CardBody className="space-y-2">
                   {lessons.map((l: any) => {
                     const idx = allLessons.findIndex((x: any) => x.id === l.id);
