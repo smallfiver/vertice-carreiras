@@ -11,6 +11,7 @@ import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { isTimeUnlocked } from "@/lib/progress";
 import { trackEvent } from "@/lib/track";
+import { SofiaWidget } from "@/components/support/sofia-widget";
 
 export default async function LessonPlayerPage({
   params,
@@ -146,6 +147,7 @@ export default async function LessonPlayerPage({
           )}
         </main>
       </div>
+      <SofiaWidget />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { TermsPopup } from "@/components/dashboard/terms-popup";
+import { SofiaWidget } from "@/components/support/sofia-widget";
 
 export default async function DashboardLayout({
   children,
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
         <main className="p-4 md:p-6">{children}</main>
       </div>
       <TermsPopup />
+      <SofiaWidget />
     </div>
   );
 }

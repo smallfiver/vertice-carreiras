@@ -15,6 +15,7 @@ import {
 import { redirect } from "next/navigation";
 import { ModuleCover } from "@/components/training/module-cover";
 import { trackEvent } from "@/lib/track";
+import { SofiaWidget } from "@/components/support/sofia-widget";
 
 export default async function TrainingPage() {
   const supabase = createClient();
@@ -157,6 +158,7 @@ export default async function TrainingPage() {
           })}
         </main>
       </div>
+      <SofiaWidget />
     </div>
   );
 }
