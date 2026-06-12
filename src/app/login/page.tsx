@@ -11,7 +11,6 @@ import { Mail, Lock, ShieldCheck, Award, TrendingUp, Lock as LockIcon, MessageCi
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -22,6 +21,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setMsg(null);
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) return setMsg(error.message);
@@ -33,6 +33,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setMsg(null);
+    const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
