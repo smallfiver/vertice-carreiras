@@ -23,6 +23,7 @@ export function TrainingAdminClient({ initialModules }: { initialModules: Module
     video_url: "",
     content: "",
     sequence_order: 1,
+    unlock_day_offset: 0,
   });
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
 
@@ -65,13 +66,14 @@ export function TrainingAdminClient({ initialModules }: { initialModules: Module
       video_url: lessonForm.video_url,
       content: lessonForm.content || null,
       sequence_order: Number(lessonForm.sequence_order),
+      unlock_day_offset: Number(lessonForm.unlock_day_offset) || 0,
     };
     if (editingLessonId) {
       await supabase.from("lessons").update(payload).eq("id", editingLessonId);
     } else {
       await supabase.from("lessons").insert(payload);
     }
-    setLessonForm({ module_id: "", title: "", video_url: "", content: "", sequence_order: 1 });
+    setLessonForm({ module_id: "", title: "", video_url: "", content: "", sequence_order: 1, unlock_day_offset: 0 });
     setEditingLessonId(null);
     refresh();
   }
@@ -124,9 +126,10 @@ export function TrainingAdminClient({ initialModules }: { initialModules: Module
               </option>
             ))}
           </select>
-          <div className="grid md:grid-cols-[1fr_120px] gap-3">
+          <div className="grid md:grid-cols-[1fr_120px_140px] gap-3">
             <Input placeholder="Título da aula" value={lessonForm.title} onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })} />
             <Input type="number" placeholder="Ordem" value={lessonForm.sequence_order} onChange={(e) => setLessonForm({ ...lessonForm, sequence_order: Number(e.target.value) })} />
+            <Input type="number" min={0} placeholder="Libera no dia (D+?)" value={lessonForm.unlock_day_offset} onChange={(e) => setLessonForm({ ...lessonForm, unlock_day_offset: Number(e.target.value) })} />
           </div>
           <Input placeholder="URL do vídeo (YouTube, Vimeo, PandaVideo)" value={lessonForm.video_url} onChange={(e) => setLessonForm({ ...lessonForm, video_url: e.target.value })} />
           <textarea
@@ -141,7 +144,7 @@ export function TrainingAdminClient({ initialModules }: { initialModules: Module
               <Plus className="h-4 w-4" /> {editingLessonId ? "Atualizar aula" : "Criar aula"}
             </Button>
             {editingLessonId && (
-              <Button variant="secondary" onClick={() => { setEditingLessonId(null); setLessonForm({ module_id: "", title: "", video_url: "", content: "", sequence_order: 1 }); }}>
+              <Button variant="secondary" onClick={() => { setEditingLessonId(null); setLessonForm({ module_id: "", title: "", video_url: "", content: "", sequence_order: 1, unlock_day_offset: 0 }); }}>
                 Cancelar
               </Button>
             )}
@@ -178,7 +181,8 @@ export function TrainingAdminClient({ initialModules }: { initialModules: Module
                     <span className="flex-1">
                       {l.sequence_order}. {l.title}
                     </span>
-                    <Button size="sm" variant="secondary" onClick={() => { setEditingLessonId(l.id); setLessonForm({ module_id: l.module_id, title: l.title, video_url: l.video_url, content: l.content ?? "", sequence_order: l.sequence_order }); }}>
+                    <span className="text-xs text-fg-muted">D+{l.unlock_day_offset ?? 0}</span>
+                    <Button size="sm" variant="secondary" onClick={() => { setEditingLessonId(l.id); setLessonForm({ module_id: l.module_id, title: l.title, video_url: l.video_url, content: l.content ?? "", sequence_order: l.sequence_order, unlock_day_offset: l.unlock_day_offset ?? 0 }); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => deleteLesson(l.id)}>

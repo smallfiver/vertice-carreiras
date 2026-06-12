@@ -4,8 +4,12 @@ import { Header } from "@/components/dashboard/header";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { CheckCircle2, Lock, PlayCircle } from "lucide-react";
-import { getTrainingProgress } from "@/lib/progress";
+import { CheckCircle2, Lock, PlayCircle, Clock } from "lucide-react";
+import {
+  getTrainingProgress,
+  isTimeUnlocked,
+  formatUnlockMessage,
+} from "@/lib/progress";
 import { redirect } from "next/navigation";
 
 export default async function TrainingPage() {
@@ -17,7 +21,7 @@ export default async function TrainingPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, is_admin")
+    .select("full_name, email, is_admin, training_started_at")
     .eq("id", user.id)
     .single();
 
@@ -35,15 +39,14 @@ export default async function TrainingPage() {
     progressRows?.filter((r) => r.completed).map((r) => r.lesson_id) || []
   );
 
-  // Lista linear de aulas para checar desbloqueio sequencial
-  const allLessons = (modules || [])
-    .flatMap((m: any) =>
-      [...(m.lessons || [])].sort(
-        (a: any, b: any) => a.sequence_order - b.sequence_order
-      )
-    );
+  const allLessons = (modules || []).flatMap((m: any) =>
+    [...(m.lessons || [])].sort(
+      (a: any, b: any) => a.sequence_order - b.sequence_order
+    )
+  );
 
   const overall = await getTrainingProgress(user.id);
+  const startedAt = profile?.training_started_at ?? null;
 
   return (
     <div className="flex">
@@ -55,7 +58,9 @@ export default async function TrainingPage() {
             <CardBody>
               <h1 className="text-2xl font-semibold">Programa de Preparação Vértice</h1>
               <p className="text-fg-muted text-sm mt-1">
-                Conclua todas as aulas para desbloquear as candidaturas.
+                Conclua todas as aulas para desbloquear as candidaturas. O
+                treinamento é liberado dia após dia — esse ritmo é proposital
+                pra você absorver de verdade cada etapa.
               </p>
               <div className="mt-4 flex items-center justify-between text-sm">
                 <span className="text-fg-muted">
@@ -64,6 +69,12 @@ export default async function TrainingPage() {
                 <span className="font-medium">{overall.percent}%</span>
               </div>
               <Progress value={overall.percent} className="mt-2" />
+              {!startedAt && (
+                <p className="text-xs text-fg-muted mt-3">
+                  Sua jornada começa assim que você concluir a primeira aula.
+                  A partir daí, novas aulas vão sendo liberadas a cada dia.
+                </p>
+              )}
             </CardBody>
           </Card>
 
@@ -85,8 +96,17 @@ export default async function TrainingPage() {
                   {lessons.map((l: any) => {
                     const idx = allLessons.findIndex((x: any) => x.id === l.id);
                     const prev = allLessons[idx - 1];
-                    const unlocked = !prev || completedIds.has(prev.id);
+                    const sequentialOk = !prev || completedIds.has(prev.id);
+                    const timeOk = isTimeUnlocked(
+                      startedAt,
+                      l.unlock_day_offset ?? 0
+                    );
+                    const unlocked = sequentialOk && timeOk;
                     const done = completedIds.has(l.id);
+                    const timeMsg = formatUnlockMessage(
+                      startedAt,
+                      l.unlock_day_offset ?? 0
+                    );
                     return (
                       <Link
                         key={l.id}
@@ -94,22 +114,30 @@ export default async function TrainingPage() {
                         className={`flex items-center gap-3 rounded-lg border border-border px-3 py-3 text-sm ${
                           unlocked
                             ? "hover:bg-card-alt"
-                            : "opacity-50 cursor-not-allowed"
+                            : "opacity-60 cursor-not-allowed"
                         }`}
                       >
                         {done ? (
                           <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                         ) : unlocked ? (
                           <PlayCircle className="h-5 w-5 text-brand-accent shrink-0" />
+                        ) : !timeOk ? (
+                          <Clock className="h-5 w-5 text-fg-muted shrink-0" />
                         ) : (
                           <Lock className="h-5 w-5 text-fg-muted shrink-0" />
                         )}
                         <span className="flex-1">
                           {l.sequence_order}. {l.title}
                         </span>
-                        {done && (
+                        {done ? (
                           <span className="text-xs text-success">Concluída</span>
-                        )}
+                        ) : !timeOk && timeMsg ? (
+                          <span className="text-xs text-fg-muted">{timeMsg}</span>
+                        ) : !sequentialOk ? (
+                          <span className="text-xs text-fg-muted">
+                            Conclua a anterior
+                          </span>
+                        ) : null}
                       </Link>
                     );
                   })}

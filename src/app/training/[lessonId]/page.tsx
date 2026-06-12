@@ -7,6 +7,7 @@ import { CompleteLessonButton } from "./complete-button";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { isTimeUnlocked } from "@/lib/progress";
 
 export default async function LessonPlayerPage({
   params,
@@ -21,7 +22,7 @@ export default async function LessonPlayerPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, is_admin")
+    .select("full_name, email, is_admin, training_started_at")
     .eq("id", user.id)
     .single();
 
@@ -58,6 +59,15 @@ export default async function LessonPlayerPage({
   );
 
   if (prev && !completedIds.has(prev.id)) {
+    redirect("/training");
+  }
+
+  if (
+    !isTimeUnlocked(
+      profile?.training_started_at ?? null,
+      lesson.unlock_day_offset ?? 0
+    )
+  ) {
     redirect("/training");
   }
 
