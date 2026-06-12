@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import Link from "next/link";
-import { BarChart3, Briefcase, GraduationCap, Users } from "lucide-react";
+import { BarChart3, Briefcase, GraduationCap, Users, MessageCircle } from "lucide-react";
 
 export default async function AdminLayout({
   children,
@@ -29,6 +29,7 @@ export default async function AdminLayout({
     { href: "/admin/jobs", label: "Vagas", icon: Briefcase },
     { href: "/admin/training", label: "Treinamento", icon: GraduationCap },
     { href: "/admin/users", label: "Usuários", icon: Users },
+    { href: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle },
   ];
 
   return (

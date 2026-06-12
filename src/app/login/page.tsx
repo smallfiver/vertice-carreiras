@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, ShieldCheck, Award, TrendingUp, Lock as LockIcon } from "lucide-react";
+import { Mail, Lock, ShieldCheck, Award, TrendingUp, Lock as LockIcon, MessageCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-6">
             <p className="text-xs uppercase tracking-[0.25em] text-brand mb-2">
               Área do Profissional
             </p>
@@ -159,6 +159,24 @@ export default function LoginPage() {
             <p className="text-sm text-fg-muted mt-2">
               Utilize o e-mail cadastrado durante a aquisição do seu plano.
             </p>
+          </div>
+
+          <div className="mb-6 rounded-lg border border-brand/30 bg-brand/10 p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-md bg-brand/20 grid place-items-center shrink-0 mt-0.5">
+                <MessageCircle className="h-4 w-4 text-brand" />
+              </div>
+              <div className="text-sm">
+                <p className="font-semibold text-fg">
+                  Seu login é o e-mail da compra na PerfectPay.
+                </p>
+                <p className="text-fg-muted text-xs mt-1 leading-relaxed">
+                  Enviamos um link mágico de acesso pelo WhatsApp logo após a
+                  confirmação do seu pagamento. Use exatamente o mesmo e-mail
+                  para entrar aqui.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-1 mb-6 p-1 bg-card rounded-lg border border-border">
@@ -190,19 +208,23 @@ export default function LoginPage() {
           >
             <div>
               <label className="text-xs uppercase tracking-wider text-fg-muted mb-1.5 block">
-                E-mail corporativo
+                E-mail da compra na PerfectPay
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-fg-muted" />
                 <Input
                   type="email"
-                  placeholder="profissional@empresa.com"
+                  placeholder="seuemail@dacompra.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-9"
                   required
                 />
               </div>
+              <p className="text-[11px] text-fg-muted mt-2">
+                É o mesmo e-mail que você recebeu pelo WhatsApp junto com o
+                link mágico.
+              </p>
             </div>
 
             {mode === "password" && (
@@ -222,8 +244,8 @@ export default function LoginPage() {
                   />
                 </div>
                 <p className="text-[11px] text-fg-muted mt-2">
-                  Primeiro acesso? Sua senha provisória é o seu CPF (apenas
-                  números).
+                  Primeiro acesso? Use o link mágico que enviamos pelo
+                  WhatsApp ou clique em <span className="text-brand font-medium">Link por e-mail</span> acima.
                 </p>
               </div>
             )}
