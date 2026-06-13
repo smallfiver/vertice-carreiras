@@ -2,9 +2,10 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { loginWithBuyerEmail, type LoginState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, ShieldCheck, Award, TrendingUp, Lock as LockIcon, MessageCircle } from "lucide-react";
@@ -16,7 +17,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"password" | "magic">("password");
+  const [mode, setMode] = useState<"password" | "magic">("magic");
+  const [isPending, startTransition] = useTransition();
 
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -37,29 +39,17 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  async function handleMagicLink(e: React.FormEvent) {
+  async function handleAutoLogin(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setMsg(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        shouldCreateUser: false, // bloqueia acesso para e-mails sem compra
-      },
+    const fd = new FormData();
+    fd.set("email", email);
+    startTransition(async () => {
+      const initial: LoginState = {};
+      const result = await loginWithBuyerEmail(initial, fd);
+      // Se chegou aqui, NÃO houve redirect — sempre é erro.
+      if (result?.error) setMsg(result.error);
     });
-    setLoading(false);
-    if (error) {
-      const lower = error.message.toLowerCase();
-      if (lower.includes("not found") || lower.includes("signups not allowed")) {
-        return setMsg(
-          "Este e-mail não consta em nossa base de profissionais. Acesso liberado apenas para o e-mail utilizado na aquisição do plano.",
-        );
-      }
-      return setMsg(error.message);
-    }
-    setMsg("Enviamos um link de acesso seguro para o seu e-mail corporativo.");
   }
 
   return (
@@ -163,25 +153,15 @@ export default function LoginPage() {
                   Seu login é o e-mail da compra na PerfectPay.
                 </p>
                 <p className="text-fg-muted text-xs mt-1 leading-relaxed">
-                  Enviamos um link mágico de acesso pelo WhatsApp logo após a
-                  confirmação do seu pagamento. Use exatamente o mesmo e-mail
-                  para entrar aqui.
+                  Basta digitar o mesmo e-mail usado na compra e clicar em
+                  acessar. O sistema entra automaticamente — sem precisar
+                  conferir caixa de e-mail.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex gap-1 mb-6 p-1 bg-card rounded-lg border border-border">
-            <button
-              onClick={() => setMode("password")}
-              className={`flex-1 py-2 rounded-md text-sm transition-all ${
-                mode === "password"
-                  ? "bg-brand text-bg-deep font-semibold"
-                  : "text-fg-muted hover:text-fg"
-              }`}
-            >
-              Senha
-            </button>
             <button
               onClick={() => setMode("magic")}
               className={`flex-1 py-2 rounded-md text-sm transition-all ${
@@ -190,12 +170,22 @@ export default function LoginPage() {
                   : "text-fg-muted hover:text-fg"
               }`}
             >
-              Link por e-mail
+              Acesso automático
+            </button>
+            <button
+              onClick={() => setMode("password")}
+              className={`flex-1 py-2 rounded-md text-sm transition-all ${
+                mode === "password"
+                  ? "bg-brand text-bg-deep font-semibold"
+                  : "text-fg-muted hover:text-fg"
+              }`}
+            >
+              Com senha
             </button>
           </div>
 
           <form
-            onSubmit={mode === "password" ? handlePasswordLogin : handleMagicLink}
+            onSubmit={mode === "password" ? handlePasswordLogin : handleAutoLogin}
             className="space-y-4"
           >
             <div>
@@ -214,8 +204,8 @@ export default function LoginPage() {
                 />
               </div>
               <p className="text-[11px] text-fg-muted mt-2">
-                É o mesmo e-mail que você recebeu pelo WhatsApp junto com o
-                link mágico.
+                É o mesmo e-mail que você usou na compra. O sistema valida e
+                entra automaticamente.
               </p>
             </div>
 
@@ -236,8 +226,9 @@ export default function LoginPage() {
                   />
                 </div>
                 <p className="text-[11px] text-fg-muted mt-2">
-                  Primeiro acesso? Use o link mágico que enviamos pelo
-                  WhatsApp ou clique em <span className="text-brand font-medium">Link por e-mail</span> acima.
+                  Primeiro acesso ou esqueceu a senha? Use{" "}
+                  <span className="text-brand font-medium">Acesso automático</span>{" "}
+                  acima — basta o e-mail da compra.
                 </p>
               </div>
             )}
@@ -245,13 +236,15 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full bg-brand hover:bg-brand-accent text-bg-deep font-semibold"
-              disabled={loading}
+              disabled={loading || isPending}
             >
-              {loading
-                ? "Autenticando..."
-                : mode === "password"
-                ? "Acessar plataforma"
-                : "Enviar link de acesso"}
+              {mode === "password"
+                ? loading
+                  ? "Autenticando..."
+                  : "Acessar plataforma"
+                : isPending
+                ? "Validando acesso..."
+                : "Entrar na plataforma"}
             </Button>
           </form>
 
