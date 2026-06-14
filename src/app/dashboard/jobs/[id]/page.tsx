@@ -6,6 +6,7 @@ import { Building2, Lock, Rocket, CheckCircle2, ShieldCheck, Clock, Award } from
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplyButton } from "./apply-button";
+import { trackEvent } from "@/lib/track";
 
 export default async function JobDetailsPage({
   params,
@@ -24,6 +25,14 @@ export default async function JobDetailsPage({
     .single();
 
   if (!job) notFound();
+
+  if (user) {
+    await trackEvent(user.id, "view_job", {
+      job_id: job.id,
+      title: job.title,
+      company: job.company_name,
+    });
+  }
 
   const progress = await getTrainingProgress(user!.id);
 

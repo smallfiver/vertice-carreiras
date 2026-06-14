@@ -87,6 +87,9 @@ function buildMessage(fullName: string | null, email: string, magicLink: string)
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
+  const url = new URL(req.url);
+  const tokenFromQuery = url.searchParams.get("token");
+
   let body: any;
   try {
     body = await req.json();
@@ -94,7 +97,8 @@ Deno.serve(async (req) => {
     return json({ error: "JSON inválido" }, 400);
   }
 
-  const { token, sale_status_enum, sale_status_detail, code, customer } = body;
+  const { sale_status_enum, sale_status_detail, code, customer } = body;
+  const token = tokenFromQuery ?? body.token;
 
   if (token !== WEBHOOK_TOKEN) {
     return json({ error: "Token inválido" }, 401);

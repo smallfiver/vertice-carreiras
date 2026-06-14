@@ -27,6 +27,7 @@ export function CompleteLessonButton({
       router.push("/login");
       return;
     }
+
     await supabase.from("user_lesson_progress").upsert(
       {
         user_id: user.id,
@@ -36,6 +37,27 @@ export function CompleteLessonButton({
       },
       { onConflict: "user_id,lesson_id" }
     );
+
+    await supabase.from("user_events").insert({
+      user_id: user.id,
+      event_type: "complete_lesson",
+      event_data: { lesson_id: lessonId },
+    });
+
+    // Marca o dia zero do treinamento na primeira conclusão — é a partir
+    // dele que os dias D+1..D+6 são calculados pra liberação gradual.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("training_started_at")
+      .eq("id", user.id)
+      .single();
+    if (!profile?.training_started_at) {
+      await supabase
+        .from("profiles")
+        .update({ training_started_at: new Date().toISOString() })
+        .eq("id", user.id);
+    }
+
     if (nextLessonId) {
       router.push(`/training/${nextLessonId}`);
     } else {

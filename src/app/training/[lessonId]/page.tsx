@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
@@ -7,6 +9,9 @@ import { CompleteLessonButton } from "./complete-button";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { isTimeUnlocked } from "@/lib/progress";
+import { trackEvent } from "@/lib/track";
+import { SofiaWidget } from "@/components/support/sofia-widget";
 
 export default async function LessonPlayerPage({
   params,
@@ -21,7 +26,7 @@ export default async function LessonPlayerPage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, email, is_admin")
+    .select("full_name, email, is_admin, training_started_at")
     .eq("id", user.id)
     .single();
 
@@ -61,7 +66,23 @@ export default async function LessonPlayerPage({
     redirect("/training");
   }
 
+  if (
+    !isTimeUnlocked(
+      profile?.training_started_at ?? null,
+      lesson.unlock_day_offset ?? 0
+    )
+  ) {
+    redirect("/training");
+  }
+
   const done = completedIds.has(lesson.id);
+
+  await trackEvent(user.id, "view_lesson", {
+    lesson_id: lesson.id,
+    lesson_title: lesson.title,
+    module_id: lesson.modules?.id,
+    module_title: lesson.modules?.title,
+  });
 
   return (
     <div className="flex">
@@ -126,6 +147,7 @@ export default async function LessonPlayerPage({
           )}
         </main>
       </div>
+      <SofiaWidget />
     </div>
   );
 }

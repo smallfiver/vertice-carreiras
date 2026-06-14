@@ -8,12 +8,17 @@ import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, FileText, Lightbulb } from "lucide-react";
+import { trackEvent } from "@/lib/track";
 
 export default async function DashboardPage() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    await trackEvent(user.id, "view_dashboard");
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
