@@ -12,6 +12,14 @@ const GREETING: Msg = {
     "Oi! Eu sou a Sofia, atendente da Vértice Carreiras. Posso te ajudar com login, treinamento, vagas ou qualquer dúvida da plataforma — em que posso ser útil?",
 };
 
+const SUGGESTIONS: string[] = [
+  "Não consigo fazer login",
+  "Como funciona o treinamento?",
+  "Onde encontro as vagas?",
+  "Quero entrar no grupo do WhatsApp",
+  "Tenho dúvida sobre meu plano",
+];
+
 export function SofiaWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
@@ -50,18 +58,16 @@ export function SofiaWidget() {
     }
   }, [messages, open]);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    const text = input.trim();
+  async function sendText(rawText: string) {
+    const text = rawText.trim();
     if (!text || sending) return;
     setInput("");
     setSending(true);
-    const next: Msg[] = [
-      ...messages,
+    setMessages((prev) => [
+      ...prev,
       { role: "user", content: text },
       { role: "assistant", content: "", pending: true },
-    ];
-    setMessages(next);
+    ]);
 
     try {
       const res = await fetch("/api/support/chat", {
@@ -91,6 +97,11 @@ export function SofiaWidget() {
     } finally {
       setSending(false);
     }
+  }
+
+  function send(e: React.FormEvent) {
+    e.preventDefault();
+    sendText(input);
   }
 
   return (
@@ -156,6 +167,21 @@ export function SofiaWidget() {
               </div>
             ))}
           </div>
+
+          {messages.length <= 1 && !sending && (
+            <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-t border-border/60 pt-2 bg-card-alt/30">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => sendText(s)}
+                  className="text-xs rounded-full border border-border bg-bg-deep px-3 py-1.5 text-fg-muted hover:text-fg hover:border-brand-accent hover:bg-card-alt transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form
             onSubmit={send}
